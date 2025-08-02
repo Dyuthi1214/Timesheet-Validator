@@ -1,0 +1,101 @@
+import { useState } from "react";
+
+interface TimesheetEntry {
+  date: string;
+  start: string;
+  end: string;
+}
+
+interface Report {
+  missingEntries: TimesheetEntry[];
+  extraEntries: TimesheetEntry[];
+}
+
+export default function TimesheetUpload() {
+  const [loading, setLoading] = useState(false);
+  const [reportId, setReportId] = useState<string | null>(null);
+  const [report, setReport] = useState<Report | null>(null);
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) return;
+    const file = event.target.files[0];
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setLoading(true);
+    try {
+      // Upload CSV to backend
+      const res = await fetch("http://localhost:5000/timesheets", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      setReportId(data.reportId);
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFetch = async () => {
+    if (!reportId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:5000/reports/${reportId}`);
+      const data = await res.json();
+      setReport(data);
+    } catch (err) {
+      console.error("Failed to fetch report", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: 20, fontFamily: "Arial" }}>
+      <h2>📤 Upload sample_timesheet.csv</h2>
+      <input type="file" accept=".csv" onChange={handleUpload} />
+
+      {loading && <p>Loading...</p>}
+
+      {reportId && (
+        <>
+          <h3>Report ID: {reportId}</h3>
+          <button onClick={handleFetch}>🔄 Refresh Report</button>
+        </>
+      )}
+
+      {report && (
+        <div style={{ marginTop: 20 }}>
+          <h3>Missing Entries</h3>
+          {report.missingEntries.length === 0 ? (
+            <p>✅ None</p>
+          ) : (
+            <ul>
+              {report.missingEntries.map((e, i) => (
+                <li key={i}>
+                  {e.date} — {e.start} to {e.end}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <h3>Extra Entries</h3>
+          {report.extraEntries.length === 0 ? (
+            <p>✅ None</p>
+          ) : (
+            <ul>
+              {report.extraEntries.map((e, i) => (
+                <li key={i}>
+                  {e.date} — {e.start} to {e.end}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
