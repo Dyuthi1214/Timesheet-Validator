@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Timesheet Validator</title>
+</head>
+<body style="font-family: Arial; text-align: center; margin-top: 50px;">
+    <h2>Upload Timesheet CSV</h2>
+
+    <form action="/validate-timesheet" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".csv" required>
+        <button type="submit">Validate Timesheet</button>
+    </form>
+
+    {% if message %}
+        <p style="margin-top: 20px; color: green;">{{ message }}</p>
+    {% endif %}
+
+    {% if download_url %}
+        <a href="{{ download_url }}" style="font-size: 18px; color: blue;">Download Validation Report</a>
+    {% endif %}
+</body>
+</html>
